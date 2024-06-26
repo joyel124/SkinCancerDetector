@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detector de Cancer de Piel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="description" content="Upload an image of your skin and let our AI-powered tool analyze it for signs of skin cancer.">
+    <meta name="author" content="joyel124">
+    <meta name="keywords" content="skin, cancer, detection, ai, machine learning, deep learning">
+    <link rel="icon" href="favicon.png" type="image/x-icon">
+</head>
+<style>
+    .image-preview {
+        position: relative;
+    }
+    .image-preview img {
+        max-width: 100%;
+        height: auto;
+    }
+    .remove-image {
+        z-index: 1;
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #3b82f6;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        padding: 2px;
+        color: white;
+        font-size: 12px;
+    }
+    .remove-image:hover {
+        background: #2563eb;
+    }
+</style>
+<body class="flex flex-col items-center justify-center min-h-screen bg-background">
+<div class="max-w-md w-full px-4 md:px-6">
+    <div class="space-y-4 text-center">
+        <h1 class="text-3xl font-bold tracking-tight">Detector de Cancer de Piel</h1>
+        <p class="text-muted-foreground">
+            Sube una imagen de tu piel y deja que nuestra herramienta impulsada por IA la analice en busca de signos de cáncer de piel.
+        </p>
+    </div>
+    <div class="mt-8 space-y-4">
+        <div id="upload-container" class="border-2 border-dashed border-muted rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors hover:border-blue-500" onclick="document.getElementById('file-upload').click();">
+            <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="w-8 h-8 text-muted-foreground"
+            >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" x2="12" y1="3" y2="15"></line>
+            </svg>
+            <p class="mt-2 text-sm text-muted-foreground">Arrastra y suelta una imagen o haz clic para subir</p>
+            <input id="file-upload" class="hidden" type="file" accept="image/*" onchange="previewImage(event)" />
+        </div>
+        <button id="analyze-button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-500 text-white hover:bg-blue-600 h-10 px-4 py-2 w-full" onclick="analyzeImage()">
+            Analizar Imagen
+        </button>
+    </div>
+    <div class="mt-8 space-y-4">
+        <div id="no-cancer" class="border rounded-lg p-4 bg-card text-card-foreground hidden">
+            <div class="flex items-center gap-4">
+                <div class="bg-muted rounded-full p-2 flex items-center justify-center">
+                    <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="w-5 h-5 text-primary"
+                    >
+                        <path d="M20 6 9 17l-5-5"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-semibold">No hay signos de cáncer de piel detectados</h3>
+                    <p class="text-sm text-muted-foreground">
+                        La imagen que proporcionaste no muestra signos de cáncer de piel. Sin embargo, consulta a un profesional de la salud para obtener una evaluación más detallada.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div id="cancer-detected" class="border rounded-lg p-4 bg-card text-card-foreground hidden">
+            <div class="flex items-center gap-4">
+                <div class="bg-muted rounded-full p-2 flex items-center justify-center">
+                    <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="w-5 h-5 text-error"
+                    >
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path>
+                        <path d="M12 9v4"></path>
+                        <path d="M12 17h.01"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-semibold">Signos de cáncer de piel detectados</h3>
+                    <p class="text-sm text-muted-foreground">
+                        La imagen que proporcionaste muestra signos de cáncer de piel. Te recomendamos que consultes a un profesional de la salud para obtener una evaluación más detallada.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script>
+    let model;
+
+    async function loadModel() {
+        model = await tf.loadLayersModel('path/to/your/model.json');
+        document.getElementById('analyze-button').disabled = false;
+    }
+
+    function previewImage(event) {
+        const input = event.target;
+        const uploadContainer = document.getElementById('upload-container');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgElement = document.createElement('img');
+                imgElement.src = e.target.result;
+
+                const imagePreview = document.createElement('div');
+                imagePreview.classList.add('image-preview');
+                imagePreview.appendChild(imgElement);
+
+                const removeButton = document.createElement('div');
+                removeButton.classList.add('remove-image');
+                removeButton.innerHTML = 'X';
+                removeButton.onclick = function(event) {
+                    event.stopPropagation();
+                    uploadContainer.innerHTML = `
+                            <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="w-8 h-8 text-muted-foreground"
+                            >
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" x2="12" y1="3" y2="15"></line>
+                            </svg>
+                            <p class="mt-2 text-sm text-muted-foreground">Arrastra y suelta una imagen o haz clic para subir</p>
+                            <input id="file-upload" class="hidden" type="file" accept="image/*" onchange="previewImage(event)" />
+                        `;
+                };
+
+                imagePreview.appendChild(removeButton);
+                uploadContainer.innerHTML = '';
+                uploadContainer.appendChild(imagePreview);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function analyzeImage() {
+        const uploadContainer = document.getElementById('upload-container');
+        const imgElement = uploadContainer.querySelector('img');
+
+        if (imgElement && model) {
+            const tensor = tf.browser.fromPixels(imgElement).resizeNearestNeighbor([224, 224]).toFloat().expandDims();
+            const prediction = await model.predict(tensor).data();
+
+            if (prediction[0] > 0.5) {
+                document.getElementById('cancer-detected').classList.remove('hidden');
+                document.getElementById('no-cancer').classList.add('hidden');
+            } else {
+                document.getElementById('no-cancer').classList.remove('hidden');
+                document.getElementById('cancer-detected').classList.add('hidden');
+            }
+        }
+    }
+
+    window.onload = loadModel;
+</script>
+</body>
+</html>
