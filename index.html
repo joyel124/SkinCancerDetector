@@ -138,7 +138,8 @@
     let model;
 
     async function loadModel() {
-        model = await tf.loadLayersModel('assets/model/model.json');
+        model = await tf.loadLayersModel('model/model.json');
+
         document.getElementById('analyze-button').disabled = false;
     }
 
@@ -214,8 +215,13 @@
         const imgElement = uploadContainer.querySelector('img');
 
         if (imgElement && model) {
-            const tensor = tf.browser.fromPixels(imgElement).resizeNearestNeighbor([224, 224]).toFloat().expandDims();
-            const prediction = await model.predict(tensor).data();
+            const tensor = tf.browser.fromPixels(imgElement).resizeNearestNeighbor([224, 224]).toFloat();
+
+            const normalized = tensor.div(255.0);
+
+            const expandedTensor = normalized.expandDims();
+
+            const prediction = await model.predict(expandedTensor).data();
 
             console.log(prediction);
 
