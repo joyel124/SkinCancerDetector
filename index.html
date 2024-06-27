@@ -48,7 +48,10 @@
         </p>
     </div>
     <div class="mt-8 space-y-4">
-        <div id="upload-container" class="border-2 border-dashed border-muted rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors hover:border-blue-500" onclick="document.getElementById('file-upload').click();">
+        <div id="upload-container" class="border-2 border-dashed border-muted rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors hover:border-blue-500"
+             onclick="document.getElementById('file-upload').click();"
+             ondragover="event.preventDefault();"
+             ondrop="handleDrop(event);">
             <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -135,8 +138,18 @@
     let model;
 
     async function loadModel() {
-        model = await tf.loadLayersModel('path/to/your/model.json');
+        model = await tf.loadLayersModel('assets/model/model.json');
         document.getElementById('analyze-button').disabled = false;
+    }
+
+    function handleDrop(event) {
+        event.preventDefault();
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            const input = document.getElementById('file-upload');
+            input.files = files;
+            previewImage({ target: input });
+        }
     }
 
     function previewImage(event) {
@@ -196,12 +209,14 @@
             const tensor = tf.browser.fromPixels(imgElement).resizeNearestNeighbor([224, 224]).toFloat().expandDims();
             const prediction = await model.predict(tensor).data();
 
-            if (prediction[0] > 0.5) {
-                document.getElementById('cancer-detected').classList.remove('hidden');
-                document.getElementById('no-cancer').classList.add('hidden');
-            } else {
+            console.log(prediction);
+
+            if (prediction[0] > prediction[1]) {
                 document.getElementById('no-cancer').classList.remove('hidden');
                 document.getElementById('cancer-detected').classList.add('hidden');
+            } else {
+                document.getElementById('no-cancer').classList.add('hidden');
+                document.getElementById('cancer-detected').classList.remove('hidden');
             }
         }
     }
