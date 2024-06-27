@@ -170,6 +170,9 @@
                 removeButton.classList.add('remove-image');
                 removeButton.innerHTML = 'X';
                 removeButton.onclick = function(event) {
+                    //clear previous results
+                    document.getElementById('no-cancer').classList.add('hidden');
+                    document.getElementById('cancer-detected').classList.add('hidden');
                     event.stopPropagation();
                     uploadContainer.innerHTML = `
                             <svg
@@ -202,6 +205,11 @@
     }
 
     async function analyzeImage() {
+
+        //clear previous results
+        document.getElementById('no-cancer').classList.add('hidden');
+        document.getElementById('cancer-detected').classList.add('hidden');
+
         const uploadContainer = document.getElementById('upload-container');
         const imgElement = uploadContainer.querySelector('img');
 
